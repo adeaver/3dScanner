@@ -1,6 +1,8 @@
 import serial
 import math
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
 
 startFlag = False
 finishCycle = False
@@ -9,6 +11,14 @@ initialize = False
 
 horizontalList = []
 verticalList = []
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+ax.set_xlabel('X Label')
+ax.set_ylabel('Y Label')
+ax.set_zlabel('Z Label')
+
 
 with serial.Serial('/dev/cu.usbmodem1421', 9600, timeout=1) as ser:
 	while not initialize:
@@ -29,7 +39,7 @@ with serial.Serial('/dev/cu.usbmodem1421', 9600, timeout=1) as ser:
 				startFlag = False
 				verticalList.append(horizontalList)
 				horizontalList = []
-		if line.strip() == "FINISH":
+		if line.strip() == "END_SCAN":
 			finishCycle = True
 		if startFlag:
 			fLine = float(line)
@@ -56,8 +66,15 @@ def getXYZ(dList, phi):
 	return xList, yList, zList
 
 for index in range(len(verticalList)):
-	xList, yList, zList = getXYZ(verticalList[index], index)
-	plt.plot(xList, yList, 'ro')
+	xList, yList, zList = getXYZ(verticalList[index], (-26 + 2*index))
+	threshold = np.median(yList)
+
+	for index in range(len(yList)):		
+		if yList[index] <= threshold:
+			ax.scatter(xList[index], yList[index], zList[index], c='r', marker='o')
+		else:
+			ax.scatter(xList[index], yList[index], zList[index], c='b', marker='o')
+
 plt.show()
 
 
